@@ -1,4 +1,5 @@
 # SimpleMessagingService
+[![dotnet pipeline](https://github.com/LindholmLabs/SimpleMessagingService/actions/workflows/dotnet.yml/badge.svg)](https://github.com/LindholmLabs/SimpleMessagingService/actions/workflows/dotnet.yml)
 
 A simple messaging service build using a WPF client, and an asp .NET core Api backend utilizing entity framework and openAPI.
 
