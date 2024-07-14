@@ -43,15 +43,15 @@ public class SettingsInterface : ISettingsInterface
 public class Settings
 {
     public List<Server> Servers { get; set; } = new List<Server>();
-    public Guid? SelectedServer { get; set; }
+    public Guid SelectedServer { get; set; } = Guid.Empty;
     public int PollingInterval { get; set; } = 1000;
 }
 
 public class Server
 {
     public Guid serverId { get; set; } = Guid.NewGuid();
-    public string? Name { get; set; }
-    public string? User { get; set; }
-    public Guid? Key { get; set; }
-    public Uri? Url { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string User { get; set; } = string.Empty;
+    public Guid Key { get; set; } = Guid.Empty;
+    public Uri? Uri { get; set; }
 }

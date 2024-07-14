@@ -10,7 +10,7 @@ public interface IApiInterface
     Task<GetMessagesContract?> GetMessagesAsync();
     Task<GetUsersContract?> GetUsersAsync();
     Task<HttpResponseMessage?> PostMessageAsync(string message);
-    Task<HttpResponseMessage> PostUserAsync(string name);
+    Task<HttpResponseMessage?> PostUserAsync(string name);
     Guid ServerKey { get; set; }
 }
 
@@ -47,7 +47,7 @@ public class ApiInterface : IApiInterface
         return await postContract(userContract, Shared.Endpoints.Users);
     }
 
-    private async Task<HttpResponseMessage> postContract<T>(T content, string endpoint)
+    private async Task<HttpResponseMessage?> postContract<T>(T content, string endpoint)
     {
         try
         {

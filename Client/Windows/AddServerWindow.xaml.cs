@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace Client;
+namespace Client.Windows;
 
 public partial class AddServerWindow : Window
 {

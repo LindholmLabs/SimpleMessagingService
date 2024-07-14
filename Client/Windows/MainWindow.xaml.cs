@@ -1,22 +1,19 @@
 ﻿using Client.Utilities;
 using Shared.Contracts;
-using System.Linq.Expressions;
+using Client.Models;
 using System.Net;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace Client;
+namespace Client.Windows;
 
 public partial class MainWindow : Window
 {
     private IApiInterface _apiInterface;
-    private ISettingsInterface _settingsInterface = new SettingsInterface();
-    private Settings _settings { get; set; }
+    private SettingsModel _settingsModel;
     private DispatcherTimer _timer;
-
-    private Server? _selectedServer => _settings?.Servers?.FirstOrDefault(x => x.serverId == _settings.SelectedServer);
 
     public MainWindow()
     {
@@ -25,30 +22,30 @@ public partial class MainWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        await LoadSettings();
+        _settingsModel = await SettingsModel.CreateAsync();
+        _apiInterface = new ApiInterface(_settingsModel.SelectedServer.Uri);
+        _apiInterface.ServerKey = _settingsModel.SelectedServer.Key;
+        await LoadServers();
 
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settings.PollingInterval) };
-        _timer.Tick += PollingCallback;
-        _timer.Start();
+        _settingsModel.PropertyChanged += async (s, e) =>
+        {
+            if (e.PropertyName == "Servers" || e.PropertyName == "selectedServer")
+            {
+                await LoadServers();
+                _apiInterface = new ApiInterface(_settingsModel.SelectedServer.Uri);
+                _apiInterface.ServerKey = _settingsModel.SelectedServer.Key;
+            }
+        };
+
+        //_timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(_settingsModel.PollingInterval) };
+        //_timer.Tick += PollingCallback;
+        //_timer.Start();
     }
 
     private async void PollingCallback(object sender, EventArgs e)
     {
         await LoadMessages();
         await LoadUsers();
-    }
-
-    private async Task LoadSettings()
-    {
-        _settings = await _settingsInterface.LoadSettingsAsync<Settings>();
-
-        if (_settings == null)
-        {
-            _settings = new Settings();
-            await _settingsInterface.SaveSettingsAsync(_settings);
-        }
-
-        await LoadServers();
     }
 
     private async Task LoadServers()
@@ -68,22 +65,18 @@ public partial class MainWindow : Window
             ServerMenu.Items.Remove(item);
         }
 
-        foreach (var server in _settings.Servers)
+        foreach (var server in _settingsModel.Servers)
         {
-            var newServerItem = new MenuItem { Header = server.Name, Name = "server_item", IsChecked = server.serverId == _settings.SelectedServer ? true : false };
-            newServerItem.Click += (s, args) => ConnectToServer(server.serverId);
+            var newServerItem = new MenuItem { Header = server.Name, Name = "server_item", IsChecked = server.serverId == _settingsModel.SelectedServer.serverId ? true : false };
+            newServerItem.Click += (s, args) => ConnectToServer(server);
             ServerMenu.Items.Insert(ServerMenu.Items.Count, newServerItem);
         }
 
-
-        var selectedServerUrl = _settings.Servers.FirstOrDefault(s => s.serverId == _settings.SelectedServer)?.Url;
-        if (selectedServerUrl != null)
+        if (_settingsModel.SelectedServer != null)
         {
-            MainHeading.Text = $"Connecting to {_selectedServer.Name}";
-            _apiInterface = new ApiInterface(selectedServerUrl);
+            MainHeading.Text = $"Connecting to {_settingsModel.SelectedServer.Name}";
 
-            Register(_selectedServer.User);
-            _apiInterface.ServerKey = (Guid)_selectedServer.Key;
+            Register(_settingsModel.SelectedServer.User);
             await LoadMessages();
             await LoadUsers();
         }
@@ -100,7 +93,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        Dispatcher.Invoke(() => MainHeading.Text = $"Connected to {_selectedServer.Name}");
+        Dispatcher.Invoke(() => MainHeading.Text = $"Connected to {_settingsModel.SelectedServer.Name}");
 
         foreach (var message in messages?.messages)
         {
@@ -132,6 +125,7 @@ public partial class MainWindow : Window
         {
             string serverName = addServerWindow.ServerName;
             string username = addServerWindow.Username;
+
             Uri serverUri;
             try
             {
@@ -143,51 +137,47 @@ public partial class MainWindow : Window
                 return;
             }
 
-            var newServer = new Server { Name = serverName, User = username, Url = serverUri };
-            _settings.Servers.Add(newServer);
-            _settings.SelectedServer = newServer.serverId;
-            await _settingsInterface.SaveSettingsAsync(_settings);
+            var newServer = new Server { Name = serverName, User = username, Uri = serverUri };
+            _settingsModel.SaveServer(newServer);
+
             await LoadServers();
         }
     }
 
-    private async void ConnectToServer(Guid key)
+    private async void ConnectToServer(Server server)
     {
         Dispatcher.Invoke(() => UserList.Items.Clear());
         Dispatcher.Invoke(() => MessageList.Items.Clear());
-        _settings.SelectedServer = key;
-        await _settingsInterface.SaveSettingsAsync(_settings);
+
+        _settingsModel.SelectedServer = server;
+        if (_settingsModel.SelectedServer.Uri == null) return;
+        _apiInterface = new ApiInterface(_settingsModel.SelectedServer.Uri);
+
         await LoadServers();
-        var server = _settings.Servers.FirstOrDefault(s => s.serverId == key);
     }
 
     private async void Register(string newUserName)
     {
-        if (_selectedServer?.Key != null && _selectedServer?.Key != Guid.Empty)
-        {
-            return;
-        }
+        if (_settingsModel?.SelectedServer.Key != null && _settingsModel.SelectedServer.Key != Guid.Empty) return;
 
         var response = await _apiInterface.PostUserAsync(newUserName);
+
         if (response == null || !response.IsSuccessStatusCode)
         {
             MessageBox.Show("Failed to register");
             return;
         } 
-        else
-        {
-            var test = await response.Content.ReadAsStringAsync();
-            var newUserContract = JsonSerializer.Deserialize<NewUserContract>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            var index = _settings.Servers.FindIndex(x => x.serverId == _selectedServer.serverId);
-            _settings.Servers[index].Key = newUserContract?.Key;
-            await _settingsInterface.SaveSettingsAsync(_settings);
-        }
+
+        var newUserContract = JsonSerializer.Deserialize<NewUserContract>(await response.Content.ReadAsStringAsync(), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (newUserContract == null) return;
+
+        _settingsModel.SelectedServer.Key = newUserContract.Key;
     }
 
     private async void SendButton_Click(object sender, RoutedEventArgs e)
     {
         var response = await _apiInterface.PostMessageAsync(MessageInput.Text);
-        if (!response.IsSuccessStatusCode)
+        if (response != null && !response.IsSuccessStatusCode)
         {
             var errorMessage = await response.Content.ReadAsStringAsync();
             switch (response.StatusCode)
@@ -212,10 +202,6 @@ public partial class MainWindow : Window
 
     private void Server_Remove_Click(object sender, RoutedEventArgs e)
     {
-        var index = _settings.Servers.FindIndex(x => x.serverId == _settings.SelectedServer);
-        _settings.Servers.RemoveAt(index);
-        _settings.SelectedServer = _settings.Servers.FirstOrDefault()?.serverId;
-        _settingsInterface.SaveSettingsAsync(_settings);
-        LoadSettings();
+        _settingsModel.RemoveServer(_settingsModel.SelectedServer);
     }
 }
