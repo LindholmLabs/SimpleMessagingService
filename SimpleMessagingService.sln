@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{30999208-C7FB-4D21-9C8E-28C78483121F}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared", "Shared\Shared.shproj", "{68156305-66A9-4DC3-B868-DC9C0B8BD678}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Api", "Api\Api.csproj", "{CF2D14EC-A094-4499-A70B-86D8B168C07D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30999208-C7FB-4D21-9C8E-28C78483121F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30999208-C7FB-4D21-9C8E-28C78483121F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30999208-C7FB-4D21-9C8E-28C78483121F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30999208-C7FB-4D21-9C8E-28C78483121F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF2D14EC-A094-4499-A70B-86D8B168C07D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF2D14EC-A094-4499-A70B-86D8B168C07D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF2D14EC-A094-4499-A70B-86D8B168C07D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF2D14EC-A094-4499-A70B-86D8B168C07D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5A133971-BAFA-4E81-8CAE-B69ECFBA20EA}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Shared\Shared.projitems*{30999208-c7fb-4d21-9c8e-28c78483121f}*SharedItemsImports = 5
+		Shared\Shared.projitems*{68156305-66a9-4dc3-b868-dc9c0b8bd678}*SharedItemsImports = 13
+		Shared\Shared.projitems*{cf2d14ec-a094-4499-a70b-86d8b168c07d}*SharedItemsImports = 5
+	EndGlobalSection
+EndGlobal
